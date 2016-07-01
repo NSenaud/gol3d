@@ -1,0 +1,12 @@
+stages:
+    - build
+    - test
+
+job1:
+    stage: build
+    script: "cargo build"
+
+job2:
+    stage: test
+    script: "cargo test"
+
