@@ -1,0 +1,11 @@
+[package]
+name = "gol3d"
+version = "0.1.0"
+authors = ["Nicolas Senaud <nicolas@senaud.fr>"]
+
+[dependencies]
+glium = "*"
+nalgebra = "0.8.2"
+
+[dependencies.kiss3d]
+git = "https://github.com/sebcrozet/kiss3d"
