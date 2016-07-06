@@ -6,11 +6,12 @@ struct Game {
 
 trait Life {
     fn new(size: usize) -> Game;
+    fn init(&mut self);
 }
 
 impl Life for Game {
     fn new(size: usize) -> Game {
-        let game = Game {
+        let mut game = Game {
             world: OwnedArray::from_shape_vec(
                        (size, size, size),
                        vec![false; size * size * size]
@@ -18,6 +19,12 @@ impl Life for Game {
         };
 
         game
+    }
+
+    fn init(&mut self) {
+        let mut start = self.world.get_mut((0, 0, 0)).unwrap();
+
+        *start = true;
     }
 }
 
@@ -30,5 +37,13 @@ mod tests {
         let game = Game::new(3);
 
         assert_eq!(&false, game.world.get((0, 0, 0)).unwrap());
+    }
+
+    #[test]
+    fn test_it_can_init_game() {
+        let mut game = Game::new(3);
+        game.init();
+
+        assert_eq!(&true, game.world.get((0, 0, 0)).unwrap());
     }
 }
