@@ -10,6 +10,11 @@ trait Life {
 }
 
 impl Life for Game {
+    /// Create an empty game cube with a given edge `size` (minimum 3).
+    ///
+    /// The cube is initialized empty (i.e. `false` everywhere).
+    ///
+    /// If the `size` parameter is less than 3, `None` is returned.
     fn new(size: usize) -> Option<Game> {
         if size < 3 { return None; }
 
@@ -23,10 +28,16 @@ impl Life for Game {
         Some(game)
     }
 
+    /// Initialize the cube with nine cells from (0, 0, 0) to (1, 1, 1)
     fn init(&mut self) {
-        let mut start = self.world.get_mut((0, 0, 0)).unwrap();
-
-        *start = true;
+        for x in 0..1 {
+            for y in 0..1 {
+                for z in 0..1 {
+                    let mut cell = self.world.get_mut((x, y, z)).unwrap();
+                    *cell = true;
+                }
+            }
+        }
     }
 }
 
@@ -46,6 +57,12 @@ mod tests {
         let mut game = Game::new(3).unwrap();
         game.init();
 
-        assert_eq!(&true, game.world.get((0, 0, 0)).unwrap());
+        for x in 0..1 {
+            for y in 0..1 {
+                for z in 0..1 {
+                    assert_eq!(&true, game.world.get((x, y, z)).unwrap());
+                }
+            }
+        }
     }
 }
