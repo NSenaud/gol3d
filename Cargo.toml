@@ -8,6 +8,7 @@ log = "0.3.6"
 env_logger = "0.3.3"
 glium = "*"
 nalgebra = "0.8.2"
+ndarray = "0.5"
 
 [dependencies.kiss3d]
 git = "https://github.com/sebcrozet/kiss3d"
