@@ -4,11 +4,9 @@ version = "0.1.0"
 authors = ["Nicolas Senaud <nicolas@senaud.fr>"]
 
 [dependencies]
-log = "0.3.6"
-env_logger = "0.3.3"
+log = "0.3.7"
+env_logger = "0.4.2"
 glium = "*"
-nalgebra = "0.8.2"
-ndarray = "0.5"
-
-[dependencies.kiss3d]
-git = "https://github.com/sebcrozet/kiss3d"
+nalgebra = "0.11.1"
+ndarray = "0.8.0"
+kiss3d = "0.8.0"
