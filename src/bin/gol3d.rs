@@ -4,8 +4,8 @@ extern crate env_logger;
 extern crate kiss3d;
 extern crate nalgebra as na;
 extern crate ndarray;
-
-mod game;
+extern crate ndarray_parallel;
+extern crate gol3d;
 
 use std::{thread, time};
 use std::sync::mpsc;
@@ -14,7 +14,7 @@ use na::{Vector3, Translation};
 use kiss3d::window::Window;
 use kiss3d::light::Light;
 
-use game::{Game, Life, Position};
+use gol3d::{Game, Life, Position};
 
 
 struct LivingCells {
@@ -50,7 +50,7 @@ fn main() {
 
     let size = 30;
 
-    let mut game = Game::new(size).unwrap();
+    let mut game = Game::with_dimension(size).unwrap();
     game.init();
 
     let mut window = Window::new("Game of Life 3D");
@@ -66,7 +66,7 @@ fn main() {
         }
     });
 
-    let mut game = Game::new(size).unwrap();
+    let mut game = Game::with_dimension(size).unwrap();
     game.init();
 
     let mut living = LivingCells::new();
