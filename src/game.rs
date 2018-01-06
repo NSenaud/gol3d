@@ -1,8 +1,8 @@
 use ndarray::prelude::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Game {
-    size: usize,
+    pub size: usize,
     pub world: Array<usize, Ix4>,
 }
 
