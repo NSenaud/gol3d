@@ -8,6 +8,13 @@ extern crate ndarray;
 use ndarray::prelude::*;
 
 
+macro_rules! pos {
+    ($tuple:expr) => (
+        Position { x: $tuple.0, y: $tuple.1, z: $tuple.2 }
+    )
+}
+
+
 /// Main game structure.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Game {
@@ -78,7 +85,7 @@ impl Life for Game {
         for x in 0..self.size {
             for y in 0..self.size {
                 for z in 0..self.size {
-                    let mut state = self.get_future_state(&Position { x:x, y:y, z:z });
+                    let mut state = self.get_future_state(&pos!((x, y, z)));
                     let mut future_cell = self.world.get_mut((x, y, z, future_state)).unwrap();
                     *future_cell = state;
 
@@ -136,7 +143,7 @@ impl Game {
         for x in self.get_range(pos.x) {
             for y in self.get_range(pos.y) {
                 for z in self.get_range(pos.z) {
-                    let new_pos = Position { x:x, y:y, z:z };
+                    let new_pos = pos!((x, y, z));
                     if new_pos != *pos && !positions.contains(&new_pos) {
                         positions.push(new_pos);
                     }
@@ -194,38 +201,38 @@ mod tests {
         assert_eq!(1, *game.world.get((2, 2, 2, 0)).unwrap());
     }
 
-    // #[test]
-    // fn test_neighbours_of() {
-    //     let mut game = Game::with_dimension(3).unwrap();
-    //     game.init();
-    //
-    //     assert_eq!(
-    //         vec![           (0, 0, 1),
-    //              (0, 1, 0), (0, 1, 1),
-    //              (1, 0, 0), (1, 0, 1),
-    //              (1, 1, 0), (1, 1, 1)],
-    //         game.neighbours_of(&Position { x:0, y:0, z:0 })
-    //     );
-    //     assert_eq!(
-    //         vec![(0, 0, 0),            (0, 0, 2),
-    //              (0, 1, 0), (0, 1, 1), (0, 1, 2),
-    //              (1, 0, 0), (1, 0, 1), (1, 0, 2),
-    //              (1, 1, 0), (1, 1, 1), (1, 1, 2)],
-    //         game.neighbours_of(&Position { x:0, y:0, z:1 })
-    //     );
-    //     assert_eq!(
-    //         vec![(0, 0, 0), (0, 0, 1), (0, 0, 2),
-    //              (0, 1, 0), (0, 1, 1), (0, 1, 2),
-    //              (0, 2, 0), (0, 2, 1), (0, 2, 2),
-    //              (1, 0, 0), (1, 0, 1), (1, 0, 2),
-    //              (1, 1, 0),            (1, 1, 2),
-    //              (1, 2, 0), (1, 2, 1), (1, 2, 2),
-    //              (2, 0, 0), (2, 0, 1), (2, 0, 2),
-    //              (2, 1, 0), (2, 1, 1), (2, 1, 2),
-    //              (2, 2, 0), (2, 2, 1), (2, 2, 2)],
-    //         game.neighbours_of(&Position { x:1, y:1, z:1 })
-    //     );
-    // }
+    #[test]
+    fn test_neighbours_of() {
+        let mut game = Game::with_dimension(3).unwrap();
+        game.init();
+
+        assert_eq!(
+            vec![                 pos!((0, 0, 1)),
+                 pos!((0, 1, 0)), pos!((0, 1, 1)),
+                 pos!((1, 0, 0)), pos!((1, 0, 1)),
+                 pos!((1, 1, 0)), pos!((1, 1, 1))],
+            game.neighbours_of(&pos!((0, 0, 0)))
+        );
+        assert_eq!(
+            vec![pos!((0, 0, 0)),                  pos!((0, 0, 2)),
+                 pos!((0, 1, 0)), pos!((0, 1, 1)), pos!((0, 1, 2)),
+                 pos!((1, 0, 0)), pos!((1, 0, 1)), pos!((1, 0, 2)),
+                 pos!((1, 1, 0)), pos!((1, 1, 1)), pos!((1, 1, 2))],
+            game.neighbours_of(&pos!((0, 0, 1)))
+        );
+        assert_eq!(
+            vec![pos!((0, 0, 0)), pos!((0, 0, 1)), pos!((0, 0, 2)),
+                 pos!((0, 1, 0)), pos!((0, 1, 1)), pos!((0, 1, 2)),
+                 pos!((0, 2, 0)), pos!((0, 2, 1)), pos!((0, 2, 2)),
+                 pos!((1, 0, 0)), pos!((1, 0, 1)), pos!((1, 0, 2)),
+                 pos!((1, 1, 0)),                  pos!((1, 1, 2)),
+                 pos!((1, 2, 0)), pos!((1, 2, 1)), pos!((1, 2, 2)),
+                 pos!((2, 0, 0)), pos!((2, 0, 1)), pos!((2, 0, 2)),
+                 pos!((2, 1, 0)), pos!((2, 1, 1)), pos!((2, 1, 2)),
+                 pos!((2, 2, 0)), pos!((2, 2, 1)), pos!((2, 2, 2))],
+            game.neighbours_of(&pos!((1, 1, 1)))
+        );
+    }
 
     #[test]
     fn test_get_range() {
@@ -242,21 +249,21 @@ mod tests {
         let mut game = Game::with_dimension(3).unwrap();
         game.init();
 
-        assert_eq!(0, game.get_future_state(&Position { x:0, y:0, z:0 }));
-        assert_eq!(0, game.get_future_state(&Position { x:0, y:0, z:1 }));
-        assert_eq!(0, game.get_future_state(&Position { x:0, y:1, z:0 }));
-        assert_eq!(0, game.get_future_state(&Position { x:0, y:1, z:1 }));
-        assert_eq!(0, game.get_future_state(&Position { x:1, y:0, z:0 }));
-        assert_eq!(0, game.get_future_state(&Position { x:1, y:0, z:1 }));
-        assert_eq!(0, game.get_future_state(&Position { x:1, y:1, z:0 }));
-        assert_eq!(0, game.get_future_state(&Position { x:1, y:1, z:1 }));
-        assert_eq!(0, game.get_future_state(&Position { x:1, y:1, z:2 }));
-        assert_eq!(0, game.get_future_state(&Position { x:1, y:2, z:1 }));
-        assert_eq!(1, game.get_future_state(&Position { x:1, y:2, z:2 }));
-        assert_eq!(0, game.get_future_state(&Position { x:2, y:1, z:1 }));
-        assert_eq!(1, game.get_future_state(&Position { x:2, y:1, z:2 }));
-        assert_eq!(1, game.get_future_state(&Position { x:2, y:2, z:1 }));
-        assert_eq!(0, game.get_future_state(&Position { x:2, y:2, z:2 }));
+        assert_eq!(0, game.get_future_state(&pos!((0, 0, 0))));
+        assert_eq!(0, game.get_future_state(&pos!((0, 0, 1))));
+        assert_eq!(0, game.get_future_state(&pos!((0, 1, 0))));
+        assert_eq!(0, game.get_future_state(&pos!((0, 1, 1))));
+        assert_eq!(0, game.get_future_state(&pos!((1, 0, 0))));
+        assert_eq!(0, game.get_future_state(&pos!((1, 0, 1))));
+        assert_eq!(0, game.get_future_state(&pos!((1, 1, 0))));
+        assert_eq!(0, game.get_future_state(&pos!((1, 1, 1))));
+        assert_eq!(0, game.get_future_state(&pos!((1, 1, 2))));
+        assert_eq!(0, game.get_future_state(&pos!((1, 2, 1))));
+        assert_eq!(1, game.get_future_state(&pos!((1, 2, 2))));
+        assert_eq!(0, game.get_future_state(&pos!((2, 1, 1))));
+        assert_eq!(1, game.get_future_state(&pos!((2, 1, 2))));
+        assert_eq!(1, game.get_future_state(&pos!((2, 2, 1))));
+        assert_eq!(0, game.get_future_state(&pos!((2, 2, 2))));
     }
 
     #[test]
