@@ -91,7 +91,7 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                 if alive != &0 {
                     let mut already_alive = false;
                     for cube in &living.cells {
-                        if cube.0 == (x, y, z) {
+                        if cube.0 == (Position { x:x, y:y, z:z }) {
                             debug!("Cell already alive");
                             already_alive = true;
                             break;
@@ -105,12 +105,12 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                         let cmove = Vector3::new(x as f32, y as f32, z as f32);
                         c.append_translation(&Translation {vector: cmove} );
 
-                        living.save((x, y, z), c);
+                        living.save(Position { x:x, y:y, z:z }, c);
                     }
                 } else {
                     let mut index = None;
                     for i in 0..living.len() {
-                        if living.cells[i].0 == (x, y, z) {
+                        if living.cells[i].0 == (Position { x:x, y:y, z:z }) {
                             index = Some(i);
                             break;
                         }
