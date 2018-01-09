@@ -17,6 +17,11 @@ use kiss3d::light::Light;
 use gol3d::{Game, Life, Position};
 
 
+const COLORS: [(f32, f32, f32); 6] = [
+    (0., 0., 0.), (1., 0., 0.), (0.8, 0., 0.2), (0.5, 0.1, 0.2), (0.4, 0.2, 0.3), (0.2, 0.3, 0.4)
+];
+
+
 struct LivingCells {
     cells: Vec<(Position, kiss3d::scene::SceneNode)>,
 }
@@ -48,7 +53,7 @@ fn main() {
     env_logger::init().unwrap();
     info!("Launching Game of Life 3D…");
 
-    let size = 30;
+    let size = 25;
 
     let mut game = Game::with_dimension(size).unwrap();
     game.init();
@@ -61,7 +66,7 @@ fn main() {
     thread::spawn(move || {
         loop {
             game.next();
-            thread::sleep(time::Duration::from_millis(500));
+            thread::sleep(time::Duration::from_millis(16));
             tx.send(game.clone()).unwrap();
         }
     });
@@ -85,14 +90,17 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
     for x in 0..game.size {
         for y in 0..game.size {
             for z in 0..game.size {
-                let alive = game.world.get((x, y, z, 0)).unwrap();
+                let age = game.world.get((x, y, z, 0)).unwrap();
 
                 // Cell is alive
-                if alive != &0 {
+                if age != &0 {
                     let mut already_alive = false;
-                    for cube in &living.cells {
-                        if cube.0 == (Position { x:x, y:y, z:z }) {
+                    for cube in &mut living.cells {
+                        let position = &cube.0;
+                        let mut cell = &mut cube.1;
+                        if *position == (Position { x:x, y:y, z:z }) {
                             debug!("Cell already alive");
+                            cell.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
                             already_alive = true;
                             break;
                         }
@@ -101,7 +109,7 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                     if !already_alive {
                         debug!("Draw cell at {}, {}, {}", x, y, z);
                         let mut c = window.add_cube(0.7, 0.7, 0.7);
-                        c.set_color(1., 0., 0.);
+                        c.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
                         let cmove = Vector3::new(x as f32, y as f32, z as f32);
                         c.append_translation(&Translation {vector: cmove} );
 
@@ -130,4 +138,12 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
     }
 
     living
+}
+
+fn color_of(age: &usize) -> (f32, f32, f32) {
+    if *age >= COLORS.len() {
+        COLORS[COLORS.len() - 1]
+    } else {
+        COLORS[*age]
+    }
 }
