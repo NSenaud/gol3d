@@ -16,6 +16,12 @@ macro_rules! pos {
 
 
 /// Main game structure.
+///
+/// size: game board size
+/// world: cell ages
+/// state: the board is a 4D array, the last dimension is time. The state is
+///        weither the index 0 or 1 of this dimension is the current state of
+///        the game. The other dimension is used to store the next state.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Game {
     pub size: usize,
@@ -29,12 +35,6 @@ pub struct Position {
     pub x: usize,
     pub y: usize,
     pub z: usize,
-}
-
-/// A Cell structure.
-struct Cell {
-    position: Position,
-    age: usize,
 }
 
 /// Public game interface.
@@ -85,7 +85,7 @@ impl Life for Game {
         for x in 0..self.size {
             for y in 0..self.size {
                 for z in 0..self.size {
-                    let mut state = self.get_future_state(&pos!((x, y, z)));
+                    let mut state = self.get_next_state(&pos!((x, y, z)));
                     let mut future_cell = self.world.get_mut((x, y, z, future_state)).unwrap();
                     *future_cell = state;
 
@@ -118,11 +118,25 @@ impl Game {
         self.state
     }
 
-    fn get_future_state(&self, pos: &Position) -> usize {
+    fn get_next_state(&self, pos: &Position) -> usize {
+        if self.will_live(pos) && !self.is_alive(pos) {
+            1
+        } else if self.will_live(pos) && self.is_alive(pos) {
+            self.world.get((pos.x, pos.y, pos.z, self.current_state())).unwrap() + 1
+        } else {
+            0
+        }
+    }
+
+    fn is_alive(&self, pos: &Position) -> bool {
+        *self.world.get((pos.x, pos.y, pos.z, self.current_state())).unwrap() > 0
+    }
+
+    fn will_live(&self, pos: &Position) -> bool {
         let mut count = 0;
 
         for n in self.neighbours_of(pos) {
-            if *self.world.get((n.x, n.y, n.z, self.current_state())).unwrap() == 1 {
+            if *self.world.get((n.x, n.y, n.z, self.current_state())).unwrap() > 0 {
                 debug!("{:?} is alive", n);
                 count += 1;
             }
@@ -130,10 +144,10 @@ impl Game {
 
         if count < 2 || count > 4 {
             debug!("({},{},{}) has {} neighbours -> 0", pos.x, pos.y, pos.z, count);
-            return 0
+            return false
         } else {
             debug!("({},{},{}) has {} neighbours -> 1", pos.x, pos.y, pos.z, count);
-            return 1
+            return true
         }
     }
 
@@ -249,21 +263,57 @@ mod tests {
         let mut game = Game::with_dimension(3).unwrap();
         game.init();
 
-        assert_eq!(0, game.get_future_state(&pos!((0, 0, 0))));
-        assert_eq!(0, game.get_future_state(&pos!((0, 0, 1))));
-        assert_eq!(0, game.get_future_state(&pos!((0, 1, 0))));
-        assert_eq!(0, game.get_future_state(&pos!((0, 1, 1))));
-        assert_eq!(0, game.get_future_state(&pos!((1, 0, 0))));
-        assert_eq!(0, game.get_future_state(&pos!((1, 0, 1))));
-        assert_eq!(0, game.get_future_state(&pos!((1, 1, 0))));
-        assert_eq!(0, game.get_future_state(&pos!((1, 1, 1))));
-        assert_eq!(0, game.get_future_state(&pos!((1, 1, 2))));
-        assert_eq!(0, game.get_future_state(&pos!((1, 2, 1))));
-        assert_eq!(1, game.get_future_state(&pos!((1, 2, 2))));
-        assert_eq!(0, game.get_future_state(&pos!((2, 1, 1))));
-        assert_eq!(1, game.get_future_state(&pos!((2, 1, 2))));
-        assert_eq!(1, game.get_future_state(&pos!((2, 2, 1))));
-        assert_eq!(0, game.get_future_state(&pos!((2, 2, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((0, 0, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((0, 0, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((0, 1, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((0, 1, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 0, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 0, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 2, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((1, 2, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 1, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((2, 1, 2))));
+        assert_eq!(1, game.get_next_state(&pos!((2, 2, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 2, 2))));
+
+        game.next();
+
+        assert_eq!(0, game.get_next_state(&pos!((0, 0, 0))));
+        assert_eq!(1, game.get_next_state(&pos!((0, 0, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((0, 1, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((0, 1, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((1, 0, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 0, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 2, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 2, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 1, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 1, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 2, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((2, 2, 2))));
+
+        game.next();
+
+        assert_eq!(1, game.get_next_state(&pos!((0, 0, 0))));
+        assert_eq!(2, game.get_next_state(&pos!((0, 0, 1))));
+        assert_eq!(2, game.get_next_state(&pos!((0, 1, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((0, 1, 1))));
+        assert_eq!(2, game.get_next_state(&pos!((1, 0, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 0, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 0))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 1, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((1, 2, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((1, 2, 2))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 1, 1))));
+        assert_eq!(1, game.get_next_state(&pos!((2, 1, 2))));
+        assert_eq!(1, game.get_next_state(&pos!((2, 2, 1))));
+        assert_eq!(0, game.get_next_state(&pos!((2, 2, 2))));
     }
 
     #[test]
