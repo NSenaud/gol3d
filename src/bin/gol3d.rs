@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+#[macro_use]
+extern crate clap;
 extern crate kiss3d;
 extern crate nalgebra as na;
 extern crate ndarray;
@@ -53,7 +55,27 @@ fn main() {
     env_logger::init().unwrap();
     info!("Launching Game of Life 3D…");
 
-    let size = 25;
+    let matches = clap_app!(gol3d =>
+        // TODO: Get version from Cargo.toml
+        (version: "0.1")
+        (author: "Nicolas Senaud <nicolas@senaud.fr>")
+        (about: "Game of Life 3D")
+        (@arg INTERVAL: -i --interval +takes_value "Interval between each turn in ms")
+        (@arg SIZE: -s --size +takes_value "Game board size")
+    ).get_matches();
+
+    let size = match usize::from_str_radix(matches.value_of("SIZE")
+                                                  .unwrap_or("25"), 10) {
+        Ok(s) => s,
+        Err(e) => panic!("{}\nSize parameter is not valid!", e),
+    };
+    let interval = match u64::from_str_radix(matches.value_of("INTERVAL")
+                                                    .unwrap_or("500"), 10) {
+        Ok(s) => s,
+        Err(e) => panic!("{}\nInterval parameter is not valid!", e),
+    };
+
+    info!("Board size: {}\nInterval: {}", size, interval);
 
     let mut game = Game::with_dimension(size).unwrap();
     game.init();
@@ -66,7 +88,7 @@ fn main() {
     thread::spawn(move || {
         loop {
             game.next();
-            thread::sleep(time::Duration::from_millis(16));
+            thread::sleep(time::Duration::from_millis(interval));
             tx.send(game.clone()).unwrap();
         }
     });

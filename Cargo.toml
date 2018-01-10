@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Nicolas Senaud <nicolas@senaud.fr>"]
 
 [dependencies]
+clap = "2.29.1"
 bencher = "0.1.5"
 env_logger = "0.4.3"
 glium = "0.19.0"
