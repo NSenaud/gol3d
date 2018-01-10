@@ -62,6 +62,8 @@ fn main() {
         (about: "Game of Life 3D")
         (@arg INTERVAL: -i --interval +takes_value "Interval between each turn in ms")
         (@arg SIZE: -s --size +takes_value "Game board size")
+        (@arg WIDTH: -w --width +takes_value "Set window width")
+        (@arg HEIGHT: -h --height +takes_value "Set window height")
     ).get_matches();
 
     let size = match usize::from_str_radix(matches.value_of("SIZE")
@@ -71,8 +73,18 @@ fn main() {
     };
     let interval = match u64::from_str_radix(matches.value_of("INTERVAL")
                                                     .unwrap_or("500"), 10) {
-        Ok(s) => s,
+        Ok(i) => i,
         Err(e) => panic!("{}\nInterval parameter is not valid!", e),
+    };
+    let width = match u32::from_str_radix(matches.value_of("WIDTH")
+                                                 .unwrap_or("1000"), 10) {
+        Ok(w) => w,
+        Err(e) => panic!("{}\nInvalid width parameter", e),
+    };
+    let height = match u32::from_str_radix(matches.value_of("HEIGHT")
+                                                  .unwrap_or("800"), 10) {
+        Ok(h) => h,
+        Err(e) => panic!("{}\nInvalid height parameter", e),
     };
 
     info!("Board size: {}\nInterval: {}", size, interval);
@@ -80,7 +92,7 @@ fn main() {
     let mut game = Game::with_dimension(size).unwrap();
     game.init();
 
-    let mut window = Window::new("Game of Life 3D");
+    let mut window = Window::new_with_size("Game of Life 3D", width, height);
     window.set_light(Light::StickToCamera);
 
     let (tx, rx) = mpsc::channel();
