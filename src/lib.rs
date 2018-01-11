@@ -29,6 +29,7 @@ pub struct Game {
     state: usize,
 }
 
+// TODO Use nalgebra::geometry::Point3
 /// A Cell position in the game space.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Position {

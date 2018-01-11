@@ -12,9 +12,10 @@ extern crate gol3d;
 use std::{thread, time};
 use std::sync::mpsc;
 
-use na::{Vector3, Translation};
+use na::{Vector3, Translation, Point3};
 use kiss3d::window::Window;
 use kiss3d::light::Light;
+use kiss3d::camera::ArcBall;
 
 use gol3d::{Game, Life, Position};
 
@@ -89,12 +90,22 @@ fn main() {
 
     info!("Board size: {}\nInterval: {}", size, interval);
 
+    // Init game.
     let mut game = Game::with_dimension(size).unwrap();
     game.init();
 
+    // Init 3d engine.
     let mut window = Window::new_with_size("Game of Life 3D", width, height);
     window.set_light(Light::StickToCamera);
 
+    // Init a custom camera.
+    let from = (size * 2) as f32;
+    let center = (size / 2) as f32;
+    let eye = Point3::new(from, from, from);
+    let at  = Point3::new(center, center, center);
+    let mut camera = ArcBall::new(eye, at);
+
+    // Init threads.
     let (tx, rx) = mpsc::channel();
 
     thread::spawn(move || {
@@ -111,7 +122,7 @@ fn main() {
     let mut living = LivingCells::new();
 
     // TODO Exit when all cells are dead
-    while window.render() {
+    while window.render_with_camera(&mut camera) {
         match rx.try_recv() {
             Ok(g) => game = g,
             Err(_) => (),
