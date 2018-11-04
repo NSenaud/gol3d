@@ -4,15 +4,15 @@ version = "0.1.0"
 authors = ["Nicolas Senaud <nicolas@senaud.fr>"]
 
 [dependencies]
-clap = "2.29.1"
+clap = "2.32.0"
 bencher = "0.1.5"
-env_logger = "0.4.3"
-glium = "0.19.0"
-kiss3d = "0.12.0"
-log = "0.4.1"
-nalgebra = "0.13.1"
-ndarray = "0.11.0"
-ndarray-parallel = "0.7.0"
+env_logger = "0.5.13"
+glium = "0.22.0"
+kiss3d = "0.16.4"
+log = "0.4.6"
+nalgebra = "0.16.8"
+ndarray = "0.12.0"
+ndarray-parallel = "0.9.0"
 
 [[bench]]
 name = "game"

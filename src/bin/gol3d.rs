@@ -53,7 +53,7 @@ impl LivingCells {
 
 
 fn main() {
-    env_logger::init().unwrap();
+    env_logger::init();
     info!("Launching Game of Life 3D…");
 
     let matches = clap_app!(gol3d =>
