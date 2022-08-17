@@ -59,7 +59,7 @@ impl Life for Game {
         }
 
         let game = Game {
-            size: size,
+            size,
             world: Array::<usize, Ix4>::zeros(Ix4(size, size, size, 2)),
             state: 0,
         };
@@ -72,13 +72,13 @@ impl Life for Game {
         for x in 0..2 {
             for y in 0..2 {
                 for z in 0..2 {
-                    let mut cell = self.world.get_mut((x, y, z, 0)).unwrap();
+                    let cell = self.world.get_mut((x, y, z, 0)).unwrap();
                     *cell = 1;
                 }
             }
         }
 
-        let mut cell = self.world.get_mut((2, 2, 2, 0)).unwrap();
+        let cell = self.world.get_mut((2, 2, 2, 0)).unwrap();
         *cell = 1;
     }
 
@@ -88,8 +88,8 @@ impl Life for Game {
         for x in 0..self.size {
             for y in 0..self.size {
                 for z in 0..self.size {
-                    let mut state = self.get_next_state(&pos!((x, y, z)));
-                    let mut future_cell = self.world.get_mut((x, y, z, future_state)).unwrap();
+                    let state = self.get_next_state(&pos!((x, y, z)));
+                    let future_cell = self.world.get_mut((x, y, z, future_state)).unwrap();
                     *future_cell = state;
 
                     debug!("({},{},{}) future state is {}", x, y, z, future_cell);

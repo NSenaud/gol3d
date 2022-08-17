@@ -43,10 +43,6 @@ impl LivingCells {
         self.cells.remove(index);
     }
 
-    fn is_empty(&self) -> bool {
-        self.cells.is_empty()
-    }
-
     fn len(&self) -> usize {
         self.cells.len()
     }
@@ -137,8 +133,8 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                     let mut already_alive = false;
                     for cube in &mut living.cells {
                         let position = &cube.0;
-                        let mut cell = &mut cube.1;
-                        if *position == (Position { x: x, y: y, z: z }) {
+                        let cell = &mut cube.1;
+                        if *position == (Position { x, y, z }) {
                             debug!("Cell already alive");
                             cell.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
                             already_alive = true;
@@ -153,12 +149,12 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                         let cmove = Vector3::new(x as f32, y as f32, z as f32);
                         c.append_translation(&Translation { vector: cmove });
 
-                        living.save(Position { x: x, y: y, z: z }, c);
+                        living.save(Position { x, y, z }, c);
                     }
                 } else {
                     let mut index = None;
                     for i in 0..living.len() {
-                        if living.cells[i].0 == (Position { x: x, y: y, z: z }) {
+                        if living.cells[i].0 == (Position { x, y, z }) {
                             index = Some(i);
                             break;
                         }
@@ -166,7 +162,7 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
 
                     match index {
                         Some(index) => {
-                            window.remove(&mut living.cells[index].1);
+                            window.remove_node(&mut living.cells[index].1);
                             living.remove(index);
                         }
                         None => (),
