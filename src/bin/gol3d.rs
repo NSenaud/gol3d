@@ -64,19 +64,19 @@ fn main() {
     )
     .get_matches();
 
-    let size = match usize::from_str_radix(matches.value_of("SIZE").unwrap_or("25"), 10) {
+    let size = match matches.value_of("SIZE").unwrap_or("25").parse::<usize>() {
         Ok(s) => s,
         Err(e) => panic!("{}\nSize parameter is not valid!", e),
     };
-    let interval = match u64::from_str_radix(matches.value_of("INTERVAL").unwrap_or("500"), 10) {
+    let interval = match matches.value_of("INTERVAL").unwrap_or("500").parse::<u64>() {
         Ok(i) => i,
         Err(e) => panic!("{}\nInterval parameter is not valid!", e),
     };
-    let width = match u32::from_str_radix(matches.value_of("WIDTH").unwrap_or("1000"), 10) {
+    let width = match matches.value_of("WIDTH").unwrap_or("1000").parse::<u32>() {
         Ok(w) => w,
         Err(e) => panic!("{}\nInvalid width parameter", e),
     };
-    let height = match u32::from_str_radix(matches.value_of("HEIGHT").unwrap_or("800"), 10) {
+    let height = match matches.value_of("HEIGHT").unwrap_or("800").parse::<u32>() {
         Ok(h) => h,
         Err(e) => panic!("{}\nInvalid height parameter", e),
     };
@@ -114,15 +114,14 @@ fn main() {
 
     // TODO Exit when all cells are dead
     while window.render_with_camera(&mut camera) {
-        match rx.try_recv() {
-            Ok(g) => game = g,
-            Err(_) => (),
+        if let Ok(g) = rx.try_recv() {
+            game = g
         };
         living = render(&mut window, &game, living);
     }
 }
 
-fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> LivingCells {
+fn render(window: &mut Window, game: &Game, mut living: LivingCells) -> LivingCells {
     for x in 0..game.size {
         for y in 0..game.size {
             for z in 0..game.size {

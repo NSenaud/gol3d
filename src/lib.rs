@@ -156,18 +156,18 @@ impl Game {
             }
         }
 
-        if count < 2 || count > 4 {
+        if !(2..=4).contains(&count) {
             debug!(
                 "({},{},{}) has {} neighbours -> 0",
                 pos.x, pos.y, pos.z, count
             );
-            return false;
+            false
         } else {
             debug!(
                 "({},{},{}) has {} neighbours -> 1",
                 pos.x, pos.y, pos.z, count
             );
-            return true;
+            true
         }
     }
 
