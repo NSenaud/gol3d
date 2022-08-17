@@ -3,27 +3,29 @@ extern crate log;
 extern crate env_logger;
 #[macro_use]
 extern crate clap;
+extern crate gol3d;
 extern crate kiss3d;
 extern crate nalgebra as na;
 extern crate ndarray;
-extern crate ndarray_parallel;
-extern crate gol3d;
 
-use std::{thread, time};
 use std::sync::mpsc;
+use std::{thread, time};
 
-use na::{Vector3, Translation, Point3};
-use kiss3d::window::Window;
-use kiss3d::light::Light;
 use kiss3d::camera::ArcBall;
+use kiss3d::light::Light;
+use kiss3d::window::Window;
+use na::{Point3, Translation, Vector3};
 
 use gol3d::{Game, Life, Position};
 
-
 const COLORS: [(f32, f32, f32); 6] = [
-    (0., 0., 0.), (1., 0., 0.), (1., 0.5, 0.), (1., 0.7, 0.), (1., 0.9, 0.), (1., 0.95, 0.)
+    (0., 0., 0.),
+    (1., 0., 0.),
+    (1., 0.5, 0.),
+    (1., 0.7, 0.),
+    (1., 0.9, 0.),
+    (1., 0.95, 0.),
 ];
-
 
 struct LivingCells {
     cells: Vec<(Position, kiss3d::scene::SceneNode)>,
@@ -51,7 +53,6 @@ impl LivingCells {
     }
 }
 
-
 fn main() {
     env_logger::init();
     info!("Launching Game of Life 3D…");
@@ -65,25 +66,22 @@ fn main() {
         (@arg SIZE: -s --size +takes_value "Game board size")
         (@arg WIDTH: -w --width +takes_value "Set window width")
         (@arg HEIGHT: -h --height +takes_value "Set window height")
-    ).get_matches();
+    )
+    .get_matches();
 
-    let size = match usize::from_str_radix(matches.value_of("SIZE")
-                                                  .unwrap_or("25"), 10) {
+    let size = match usize::from_str_radix(matches.value_of("SIZE").unwrap_or("25"), 10) {
         Ok(s) => s,
         Err(e) => panic!("{}\nSize parameter is not valid!", e),
     };
-    let interval = match u64::from_str_radix(matches.value_of("INTERVAL")
-                                                    .unwrap_or("500"), 10) {
+    let interval = match u64::from_str_radix(matches.value_of("INTERVAL").unwrap_or("500"), 10) {
         Ok(i) => i,
         Err(e) => panic!("{}\nInterval parameter is not valid!", e),
     };
-    let width = match u32::from_str_radix(matches.value_of("WIDTH")
-                                                 .unwrap_or("1000"), 10) {
+    let width = match u32::from_str_radix(matches.value_of("WIDTH").unwrap_or("1000"), 10) {
         Ok(w) => w,
         Err(e) => panic!("{}\nInvalid width parameter", e),
     };
-    let height = match u32::from_str_radix(matches.value_of("HEIGHT")
-                                                  .unwrap_or("800"), 10) {
+    let height = match u32::from_str_radix(matches.value_of("HEIGHT").unwrap_or("800"), 10) {
         Ok(h) => h,
         Err(e) => panic!("{}\nInvalid height parameter", e),
     };
@@ -102,18 +100,16 @@ fn main() {
     let from = (size * 2) as f32;
     let center = (size / 2) as f32;
     let eye = Point3::new(from, from, from);
-    let at  = Point3::new(center, center, center);
+    let at = Point3::new(center, center, center);
     let mut camera = ArcBall::new(eye, at);
 
     // Init threads.
     let (tx, rx) = mpsc::channel();
 
-    thread::spawn(move || {
-        loop {
-            game.next();
-            thread::sleep(time::Duration::from_millis(interval));
-            tx.send(game.clone()).unwrap();
-        }
+    thread::spawn(move || loop {
+        game.next();
+        thread::sleep(time::Duration::from_millis(interval));
+        tx.send(game.clone()).unwrap();
     });
 
     let mut game = Game::with_dimension(size).unwrap();
@@ -143,7 +139,7 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                     for cube in &mut living.cells {
                         let position = &cube.0;
                         let mut cell = &mut cube.1;
-                        if *position == (Position { x:x, y:y, z:z }) {
+                        if *position == (Position { x: x, y: y, z: z }) {
                             debug!("Cell already alive");
                             cell.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
                             already_alive = true;
@@ -156,25 +152,24 @@ fn render<'a>(window: &'a mut Window, game: &Game, mut living: LivingCells) -> L
                         let mut c = window.add_cube(0.7, 0.7, 0.7);
                         c.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
                         let cmove = Vector3::new(x as f32, y as f32, z as f32);
-                        c.append_translation(&Translation {vector: cmove} );
+                        c.append_translation(&Translation { vector: cmove });
 
-                        living.save(Position { x:x, y:y, z:z }, c);
+                        living.save(Position { x: x, y: y, z: z }, c);
                     }
                 } else {
                     let mut index = None;
                     for i in 0..living.len() {
-                        if living.cells[i].0 == (Position { x:x, y:y, z:z }) {
+                        if living.cells[i].0 == (Position { x: x, y: y, z: z }) {
                             index = Some(i);
                             break;
                         }
-
                     }
 
                     match index {
                         Some(index) => {
                             window.remove(&mut living.cells[index].1);
                             living.remove(index);
-                        },
+                        }
                         None => (),
                     }
                 }

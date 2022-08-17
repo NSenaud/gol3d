@@ -46,5 +46,10 @@ fn bench_next_dim30_30th_sec(bench: &mut Bencher) {
     });
 }
 
-benchmark_group!(benches, bench_next_dim30_1st_sec, bench_next_dim30_5th_sec, bench_next_dim30_30th_sec);
+benchmark_group!(
+    benches,
+    bench_next_dim30_1st_sec,
+    bench_next_dim30_5th_sec,
+    bench_next_dim30_30th_sec
+);
 benchmark_main!(benches);

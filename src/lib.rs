@@ -7,13 +7,15 @@ extern crate ndarray;
 
 use ndarray::prelude::*;
 
-
 macro_rules! pos {
-    ($tuple:expr) => (
-        Position { x: $tuple.0, y: $tuple.1, z: $tuple.2 }
-    )
+    ($tuple:expr) => {
+        Position {
+            x: $tuple.0,
+            y: $tuple.1,
+            z: $tuple.2,
+        }
+    };
 }
-
 
 /// Main game structure.
 ///
@@ -45,7 +47,6 @@ pub trait Life {
     fn next(&mut self);
 }
 
-
 impl Life for Game {
     /// Create an empty game cube with a given edge `size` (minimum 3).
     ///
@@ -54,7 +55,9 @@ impl Life for Game {
     ///
     /// If the `size` parameter is less than 3, `None` is returned.
     fn with_dimension<'a>(size: usize) -> Result<Game, &'a str> {
-        if size < 3 { return Err("Too small board! Should be 3 or more."); }
+        if size < 3 {
+            return Err("Too small board! Should be 3 or more.");
+        }
 
         let game = Game {
             size: size,
@@ -100,7 +103,6 @@ impl Life for Game {
     }
 }
 
-
 /// Private game interface.
 impl Game {
     fn swap_state(&mut self) {
@@ -123,32 +125,50 @@ impl Game {
         if self.will_live(pos) && !self.is_alive(pos) {
             1
         } else if self.will_live(pos) && self.is_alive(pos) {
-            self.world.get((pos.x, pos.y, pos.z, self.current_state())).unwrap() + 1
+            self.world
+                .get((pos.x, pos.y, pos.z, self.current_state()))
+                .unwrap()
+                + 1
         } else {
             0
         }
     }
 
     fn is_alive(&self, pos: &Position) -> bool {
-        *self.world.get((pos.x, pos.y, pos.z, self.current_state())).unwrap() > 0
+        *self
+            .world
+            .get((pos.x, pos.y, pos.z, self.current_state()))
+            .unwrap()
+            > 0
     }
 
     fn will_live(&self, pos: &Position) -> bool {
         let mut count = 0;
 
         for n in self.neighbours_of(pos) {
-            if *self.world.get((n.x, n.y, n.z, self.current_state())).unwrap() > 0 {
+            if *self
+                .world
+                .get((n.x, n.y, n.z, self.current_state()))
+                .unwrap()
+                > 0
+            {
                 debug!("{:?} is alive", n);
                 count += 1;
             }
         }
 
         if count < 2 || count > 4 {
-            debug!("({},{},{}) has {} neighbours -> 0", pos.x, pos.y, pos.z, count);
-            return false
+            debug!(
+                "({},{},{}) has {} neighbours -> 0",
+                pos.x, pos.y, pos.z, count
+            );
+            return false;
         } else {
-            debug!("({},{},{}) has {} neighbours -> 1", pos.x, pos.y, pos.z, count);
-            return true
+            debug!(
+                "({},{},{}) has {} neighbours -> 1",
+                pos.x, pos.y, pos.z, count
+            );
+            return true;
         }
     }
 
@@ -173,14 +193,17 @@ impl Game {
     fn get_range(&self, v: usize) -> Vec<usize> {
         let mut range = Vec::new();
 
-        if v > 0 { range.push(v - 1) };
+        if v > 0 {
+            range.push(v - 1)
+        };
         range.push(v);
-        if v + 1 < self.size { range.push(v + 1) };
+        if v + 1 < self.size {
+            range.push(v + 1)
+        };
 
         range
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -222,29 +245,62 @@ mod tests {
         game.init();
 
         assert_eq!(
-            vec![                 pos!((0, 0, 1)),
-                 pos!((0, 1, 0)), pos!((0, 1, 1)),
-                 pos!((1, 0, 0)), pos!((1, 0, 1)),
-                 pos!((1, 1, 0)), pos!((1, 1, 1))],
+            vec![
+                pos!((0, 0, 1)),
+                pos!((0, 1, 0)),
+                pos!((0, 1, 1)),
+                pos!((1, 0, 0)),
+                pos!((1, 0, 1)),
+                pos!((1, 1, 0)),
+                pos!((1, 1, 1))
+            ],
             game.neighbours_of(&pos!((0, 0, 0)))
         );
         assert_eq!(
-            vec![pos!((0, 0, 0)),                  pos!((0, 0, 2)),
-                 pos!((0, 1, 0)), pos!((0, 1, 1)), pos!((0, 1, 2)),
-                 pos!((1, 0, 0)), pos!((1, 0, 1)), pos!((1, 0, 2)),
-                 pos!((1, 1, 0)), pos!((1, 1, 1)), pos!((1, 1, 2))],
+            vec![
+                pos!((0, 0, 0)),
+                pos!((0, 0, 2)),
+                pos!((0, 1, 0)),
+                pos!((0, 1, 1)),
+                pos!((0, 1, 2)),
+                pos!((1, 0, 0)),
+                pos!((1, 0, 1)),
+                pos!((1, 0, 2)),
+                pos!((1, 1, 0)),
+                pos!((1, 1, 1)),
+                pos!((1, 1, 2))
+            ],
             game.neighbours_of(&pos!((0, 0, 1)))
         );
         assert_eq!(
-            vec![pos!((0, 0, 0)), pos!((0, 0, 1)), pos!((0, 0, 2)),
-                 pos!((0, 1, 0)), pos!((0, 1, 1)), pos!((0, 1, 2)),
-                 pos!((0, 2, 0)), pos!((0, 2, 1)), pos!((0, 2, 2)),
-                 pos!((1, 0, 0)), pos!((1, 0, 1)), pos!((1, 0, 2)),
-                 pos!((1, 1, 0)),                  pos!((1, 1, 2)),
-                 pos!((1, 2, 0)), pos!((1, 2, 1)), pos!((1, 2, 2)),
-                 pos!((2, 0, 0)), pos!((2, 0, 1)), pos!((2, 0, 2)),
-                 pos!((2, 1, 0)), pos!((2, 1, 1)), pos!((2, 1, 2)),
-                 pos!((2, 2, 0)), pos!((2, 2, 1)), pos!((2, 2, 2))],
+            vec![
+                pos!((0, 0, 0)),
+                pos!((0, 0, 1)),
+                pos!((0, 0, 2)),
+                pos!((0, 1, 0)),
+                pos!((0, 1, 1)),
+                pos!((0, 1, 2)),
+                pos!((0, 2, 0)),
+                pos!((0, 2, 1)),
+                pos!((0, 2, 2)),
+                pos!((1, 0, 0)),
+                pos!((1, 0, 1)),
+                pos!((1, 0, 2)),
+                pos!((1, 1, 0)),
+                pos!((1, 1, 2)),
+                pos!((1, 2, 0)),
+                pos!((1, 2, 1)),
+                pos!((1, 2, 2)),
+                pos!((2, 0, 0)),
+                pos!((2, 0, 1)),
+                pos!((2, 0, 2)),
+                pos!((2, 1, 0)),
+                pos!((2, 1, 1)),
+                pos!((2, 1, 2)),
+                pos!((2, 2, 0)),
+                pos!((2, 2, 1)),
+                pos!((2, 2, 2))
+            ],
             game.neighbours_of(&pos!((1, 1, 1)))
         );
     }
