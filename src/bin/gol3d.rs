@@ -5,7 +5,6 @@ extern crate env_logger;
 extern crate clap;
 extern crate gol3d;
 extern crate kiss3d;
-extern crate nalgebra as na;
 extern crate ndarray;
 
 use std::sync::mpsc;
@@ -13,8 +12,8 @@ use std::{thread, time};
 
 use kiss3d::camera::ArcBall;
 use kiss3d::light::Light;
+use kiss3d::nalgebra::{Point3, Translation, Vector3};
 use kiss3d::window::Window;
-use na::{Point3, Translation, Vector3};
 
 use gol3d::{Game, Life, Position};
 

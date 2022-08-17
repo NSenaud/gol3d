@@ -2,7 +2,6 @@
 extern crate log;
 extern crate env_logger;
 extern crate kiss3d;
-extern crate nalgebra as na;
 extern crate ndarray;
 
 use ndarray::prelude::*;
