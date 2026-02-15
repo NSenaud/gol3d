@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::mpsc;
 use std::{thread, time};
 
@@ -16,26 +17,15 @@ const COLORS: [Color; 6] = [
     Color::new(1., 0.95, 0., 1.),
 ];
 
-struct LivingCells {
-    cells: Vec<(Position, SceneNode3d)>,
-}
-
-impl LivingCells {
-    fn new() -> LivingCells {
-        LivingCells { cells: Vec::new() }
-    }
-
-    fn save(&mut self, pos: Position, cube: SceneNode3d) {
-        self.cells.push((pos, cube))
-    }
-
-    fn remove(&mut self, index: usize) {
-        self.cells.remove(index);
-    }
-
-    fn len(&self) -> usize {
-        self.cells.len()
-    }
+fn parse_arg<T: std::str::FromStr>(matches: &clap::ArgMatches, name: &str, default: &str) -> T
+where
+    T::Err: std::fmt::Display,
+{
+    matches
+        .value_of(name)
+        .unwrap_or(default)
+        .parse::<T>()
+        .unwrap_or_else(|e| panic!("{}\nInvalid {} parameter", e, name.to_lowercase()))
 }
 
 #[kiss3d::main]
@@ -54,22 +44,10 @@ async fn main() {
     )
     .get_matches();
 
-    let size = match matches.value_of("SIZE").unwrap_or("25").parse::<usize>() {
-        Ok(s) => s,
-        Err(e) => panic!("{}\nSize parameter is not valid!", e),
-    };
-    let interval = match matches.value_of("INTERVAL").unwrap_or("500").parse::<u64>() {
-        Ok(i) => i,
-        Err(e) => panic!("{}\nInterval parameter is not valid!", e),
-    };
-    let width = match matches.value_of("WIDTH").unwrap_or("1000").parse::<u32>() {
-        Ok(w) => w,
-        Err(e) => panic!("{}\nInvalid width parameter", e),
-    };
-    let height = match matches.value_of("HEIGHT").unwrap_or("800").parse::<u32>() {
-        Ok(h) => h,
-        Err(e) => panic!("{}\nInvalid height parameter", e),
-    };
+    let size: usize = parse_arg(&matches, "SIZE", "25");
+    let interval: u64 = parse_arg(&matches, "INTERVAL", "500");
+    let width: u32 = parse_arg(&matches, "WIDTH", "1000");
+    let height: u32 = parse_arg(&matches, "HEIGHT", "800");
 
     log::info!("Board size: {}\nInterval: {}", size, interval);
 
@@ -109,69 +87,49 @@ async fn main() {
     let mut game = Game::with_dimension(size).unwrap();
     game.init();
 
-    let mut living = LivingCells::new();
+    let mut living: HashMap<Position, SceneNode3d> = HashMap::new();
 
     while window.render_3d(&mut scene, &mut camera).await {
-        if let Ok(g) = rx.try_recv() {
-            game = g
-        };
-        living = render(&mut scene, &game, living);
+        match rx.try_recv() {
+            Ok(g) => game = g,
+            Err(mpsc::TryRecvError::Empty) => {}
+            Err(mpsc::TryRecvError::Disconnected) => {
+                log::error!("Game thread disconnected");
+                break;
+            }
+        }
+        render(&mut scene, &game, &mut living);
     }
 }
 
-fn render(scene: &mut SceneNode3d, game: &Game, mut living: LivingCells) -> LivingCells {
+fn render(scene: &mut SceneNode3d, game: &Game, living: &mut HashMap<Position, SceneNode3d>) {
+    let state = game.current_state();
+
     for x in 0..game.size {
         for y in 0..game.size {
             for z in 0..game.size {
-                let age = game.world.get((x, y, z, 0)).unwrap();
+                let age = *game.world.get((x, y, z, state)).unwrap();
+                let pos = Position { x, y, z };
 
-                // Cell is alive
-                if age != &0 {
-                    let mut already_alive = false;
-                    for cube in &mut living.cells {
-                        let position = &cube.0;
-                        let cell = &mut cube.1;
-                        if *position == (Position { x, y, z }) {
-                            log::debug!("Cell already alive");
-                            cell.set_color(color_of(age));
-                            already_alive = true;
-                            break;
-                        }
-                    }
-
-                    if !already_alive {
+                if age != 0 {
+                    if let Some(cell) = living.get_mut(&pos) {
+                        log::debug!("Cell already alive");
+                        cell.set_color(color_of(age));
+                    } else {
                         log::debug!("Draw cell at {}, {}, {}", x, y, z);
                         let mut c = scene.add_cube(0.7, 0.7, 0.7);
                         c.set_color(color_of(age));
                         c.set_position(Vec3::new(x as f32, y as f32, z as f32));
-
-                        living.save(Position { x, y, z }, c);
+                        living.insert(pos, c);
                     }
-                } else {
-                    let mut index = None;
-                    for i in 0..living.len() {
-                        if living.cells[i].0 == (Position { x, y, z }) {
-                            index = Some(i);
-                            break;
-                        }
-                    }
-
-                    if let Some(index) = index {
-                        living.cells[index].1.remove();
-                        living.remove(index);
-                    }
+                } else if let Some(mut node) = living.remove(&pos) {
+                    node.remove();
                 }
             }
         }
     }
-
-    living
 }
 
-fn color_of(age: &usize) -> Color {
-    if *age >= COLORS.len() {
-        COLORS[COLORS.len() - 1]
-    } else {
-        COLORS[*age]
-    }
+fn color_of(age: usize) -> Color {
+    COLORS[age.min(COLORS.len() - 1)]
 }
