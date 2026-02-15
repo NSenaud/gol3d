@@ -84,9 +84,9 @@ async fn main() {
     let mut scene = SceneNode3d::empty();
     let from = (size * 2) as f32;
     let center = (size / 2) as f32;
-    let mut light_node = SceneNode3d::new_light(Light::point(from * 2.0).with_intensity(5.0));
-    light_node.set_position(Vec3::new(from, from, from));
-    scene.add_child(light_node);
+    scene
+        .add_light(Light::point(from * 2.0).with_intensity(5.0))
+        .set_position(Vec3::new(from, from, from));
 
     // Init a custom camera.
     let eye = Vec3::new(from, from, from);
@@ -100,7 +100,9 @@ async fn main() {
         loop {
             game.next();
             thread::sleep(time::Duration::from_millis(interval));
-            tx.send(game.clone()).unwrap();
+            if tx.send(game.clone()).is_err() {
+                break;
+            }
         }
     });
 
