@@ -96,10 +96,12 @@ async fn main() {
     // Init threads.
     let (tx, rx) = mpsc::channel();
 
-    thread::spawn(move || loop {
-        game.next();
-        thread::sleep(time::Duration::from_millis(interval));
-        tx.send(game.clone()).unwrap();
+    thread::spawn(move || {
+        loop {
+            game.next();
+            thread::sleep(time::Duration::from_millis(interval));
+            tx.send(game.clone()).unwrap();
+        }
     });
 
     let mut game = Game::with_dimension(size).unwrap();

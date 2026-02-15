@@ -46,6 +46,6 @@ RUST_LOG=debug cargo test            # Tests with debug logging
 
 ## Notes
 
-- No Rust edition specified in Cargo.toml (defaults to 2015)
+- Rust edition 2024 specified in Cargo.toml
 - CI is GitLab CI (`.gitlab-ci.yml`): build → test stages
 - Benchmarks use the `bencher` crate with `harness = false` in Cargo.toml
