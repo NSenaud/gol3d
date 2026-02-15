@@ -1,33 +1,23 @@
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-#[macro_use]
-extern crate clap;
-extern crate gol3d;
-extern crate kiss3d;
-extern crate ndarray;
-
 use std::sync::mpsc;
 use std::{thread, time};
 
-use kiss3d::camera::ArcBall;
+use clap::clap_app;
 use kiss3d::light::Light;
-use kiss3d::nalgebra::{Point3, Translation, Vector3};
-use kiss3d::window::Window;
+use kiss3d::prelude::*;
 
 use gol3d::{Game, Life, Position};
 
-const COLORS: [(f32, f32, f32); 6] = [
-    (0., 0., 0.),
-    (1., 0., 0.),
-    (1., 0.5, 0.),
-    (1., 0.7, 0.),
-    (1., 0.9, 0.),
-    (1., 0.95, 0.),
+const COLORS: [Color; 6] = [
+    Color::new(0., 0., 0., 1.),
+    Color::new(1., 0., 0., 1.),
+    Color::new(1., 0.5, 0., 1.),
+    Color::new(1., 0.7, 0., 1.),
+    Color::new(1., 0.9, 0., 1.),
+    Color::new(1., 0.95, 0., 1.),
 ];
 
 struct LivingCells {
-    cells: Vec<(Position, kiss3d::scene::SceneNode)>,
+    cells: Vec<(Position, SceneNode3d)>,
 }
 
 impl LivingCells {
@@ -35,7 +25,7 @@ impl LivingCells {
         LivingCells { cells: Vec::new() }
     }
 
-    fn save(&mut self, pos: Position, cube: kiss3d::scene::SceneNode) {
+    fn save(&mut self, pos: Position, cube: SceneNode3d) {
         self.cells.push((pos, cube))
     }
 
@@ -48,12 +38,12 @@ impl LivingCells {
     }
 }
 
-fn main() {
+#[kiss3d::main]
+async fn main() {
     env_logger::init();
-    info!("Launching Game of Life 3D…");
+    log::info!("Launching Game of Life 3D…");
 
     let matches = clap_app!(gol3d =>
-        // TODO: Get version from Cargo.toml
         (version: "0.1")
         (author: "Nicolas Senaud <nicolas@senaud.fr>")
         (about: "Game of Life 3D")
@@ -81,30 +71,39 @@ fn main() {
         Err(e) => panic!("{}\nInvalid height parameter", e),
     };
 
-    info!("Board size: {}\nInterval: {}", size, interval);
+    log::info!("Board size: {}\nInterval: {}", size, interval);
 
     // Init game.
     let mut game = Game::with_dimension(size).unwrap();
     game.init();
 
     // Init 3d engine.
-    let mut window = Window::new_with_size("Game of Life 3D", width, height);
-    window.set_light(Light::StickToCamera);
+    let mut window = Window::new_with_size("Game of Life 3D", width, height).await;
 
-    // Init a custom camera.
+    // Init scene with a light.
+    let mut scene = SceneNode3d::empty();
     let from = (size * 2) as f32;
     let center = (size / 2) as f32;
-    let eye = Point3::new(from, from, from);
-    let at = Point3::new(center, center, center);
-    let mut camera = ArcBall::new(eye, at);
+    scene
+        .add_light(Light::point(from * 2.0).with_intensity(5.0))
+        .set_position(Vec3::new(from, from, from));
+
+    // Init a custom camera.
+    let eye = Vec3::new(from, from, from);
+    let at = Vec3::new(center, center, center);
+    let mut camera = OrbitCamera3d::new(eye, at);
 
     // Init threads.
     let (tx, rx) = mpsc::channel();
 
-    thread::spawn(move || loop {
-        game.next();
-        thread::sleep(time::Duration::from_millis(interval));
-        tx.send(game.clone()).unwrap();
+    thread::spawn(move || {
+        loop {
+            game.next();
+            thread::sleep(time::Duration::from_millis(interval));
+            if tx.send(game.clone()).is_err() {
+                break;
+            }
+        }
     });
 
     let mut game = Game::with_dimension(size).unwrap();
@@ -112,16 +111,15 @@ fn main() {
 
     let mut living = LivingCells::new();
 
-    // TODO Exit when all cells are dead
-    while window.render_with_camera(&mut camera) {
+    while window.render_3d(&mut scene, &mut camera).await {
         if let Ok(g) = rx.try_recv() {
             game = g
         };
-        living = render(&mut window, &game, living);
+        living = render(&mut scene, &game, living);
     }
 }
 
-fn render(window: &mut Window, game: &Game, mut living: LivingCells) -> LivingCells {
+fn render(scene: &mut SceneNode3d, game: &Game, mut living: LivingCells) -> LivingCells {
     for x in 0..game.size {
         for y in 0..game.size {
             for z in 0..game.size {
@@ -134,19 +132,18 @@ fn render(window: &mut Window, game: &Game, mut living: LivingCells) -> LivingCe
                         let position = &cube.0;
                         let cell = &mut cube.1;
                         if *position == (Position { x, y, z }) {
-                            debug!("Cell already alive");
-                            cell.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
+                            log::debug!("Cell already alive");
+                            cell.set_color(color_of(age));
                             already_alive = true;
                             break;
                         }
                     }
 
                     if !already_alive {
-                        debug!("Draw cell at {}, {}, {}", x, y, z);
-                        let mut c = window.add_cube(0.7, 0.7, 0.7);
-                        c.set_color(color_of(age).0, color_of(age).1, color_of(age).2);
-                        let cmove = Vector3::new(x as f32, y as f32, z as f32);
-                        c.append_translation(&Translation { vector: cmove });
+                        log::debug!("Draw cell at {}, {}, {}", x, y, z);
+                        let mut c = scene.add_cube(0.7, 0.7, 0.7);
+                        c.set_color(color_of(age));
+                        c.set_position(Vec3::new(x as f32, y as f32, z as f32));
 
                         living.save(Position { x, y, z }, c);
                     }
@@ -159,12 +156,9 @@ fn render(window: &mut Window, game: &Game, mut living: LivingCells) -> LivingCe
                         }
                     }
 
-                    match index {
-                        Some(index) => {
-                            window.remove_node(&mut living.cells[index].1);
-                            living.remove(index);
-                        }
-                        None => (),
+                    if let Some(index) = index {
+                        living.cells[index].1.remove();
+                        living.remove(index);
                     }
                 }
             }
@@ -174,7 +168,7 @@ fn render(window: &mut Window, game: &Game, mut living: LivingCells) -> LivingCe
     living
 }
 
-fn color_of(age: &usize) -> (f32, f32, f32) {
+fn color_of(age: &usize) -> Color {
     if *age >= COLORS.len() {
         COLORS[COLORS.len() - 1]
     } else {

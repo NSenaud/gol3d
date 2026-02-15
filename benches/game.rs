@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate bencher;
-extern crate gol3d;
 
 use bencher::Bencher;
 use gol3d::{Game, Life};

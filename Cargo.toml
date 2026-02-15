@@ -2,13 +2,13 @@
 name = "gol3d"
 version = "0.1.0"
 authors = ["Nicolas Senaud <nicolas@senaud.fr>"]
+edition = "2024"
 
 [dependencies]
 clap = "2"
 bencher = "0.1.5"
 env_logger = "0.9"
-glium = "0.32"
-kiss3d = "0.35"
+kiss3d = "0.40"
 log = "0.4"
 ndarray = { version = "0.15", features = ["rayon"] }
 
