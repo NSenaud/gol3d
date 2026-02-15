@@ -5,7 +5,7 @@ authors = ["Nicolas Senaud <nicolas@senaud.fr>"]
 edition = "2024"
 
 [dependencies]
-clap = "2"
+clap = "4"
 bencher = "0.1.5"
 env_logger = "0.9"
 kiss3d = "0.40"
