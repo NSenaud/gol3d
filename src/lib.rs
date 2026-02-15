@@ -1,8 +1,5 @@
 #[macro_use]
 extern crate log;
-extern crate env_logger;
-extern crate kiss3d;
-extern crate ndarray;
 
 use ndarray::prelude::*;
 
