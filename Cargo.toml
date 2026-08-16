@@ -8,7 +8,7 @@ edition = "2024"
 clap = "2"
 bencher = "0.1.5"
 env_logger = "0.9"
-kiss3d = "0.40"
+kiss3d = "0.46"
 log = "0.4"
 ndarray = { version = "0.15", features = ["rayon"] }
 
